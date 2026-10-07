@@ -69,6 +69,10 @@ class Boy:
             distance = MOVE_SPEED * delta_time / length
             self.x += dx * distance
             self.y += dy * distance
+        # 중심뿐 아니라 100×100 프레임 전체가 화면 안에 있도록 제한한다.
+        half_width, half_height = FRAME_WIDTH / 2, FRAME_HEIGHT / 2
+        self.x = max(half_width, min(self.x, CANVAS_WIDTH - half_width))
+        self.y = max(half_height, min(self.y, CANVAS_HEIGHT - half_height))
         self.moving = (self.x, self.y) != (old_x, old_y)
 
         if (self.moving, self.facing) != old_animation:
