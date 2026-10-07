@@ -1,7 +1,7 @@
 # Drill #9 제품 요구사항 명세서 (PRD)
 
-작성일: 2026-10-07 (한국 시간)  
-프로젝트: Drill09 — 소년 상하좌우 이동 및 방향 바꾸기  
+작성일: 2026-10-07 (한국 시간)
+프로젝트: Drill09 — 소년 상하좌우 이동 및 방향 바꾸기
 실행 파일: `animation_drill09.py`
 
 ## 1. 목적과 범위
@@ -78,5 +78,5 @@ python -m unittest discover -s tests -v
 git log --oneline
 ```
 
-제출 대상 저장소 URL: `https://github.com/adg6641/Drill09.git`  
+제출 대상 저장소 URL: `https://github.com/adg6641/Drill09.git`
 과제 제출 시스템에 위 URL을 입력하는 작업은 프로그램 작성과 별개이며 사용자가 수행한다.
