@@ -16,12 +16,22 @@ CANVAS_HEIGHT = 600
 FRAME_WIDTH = 100
 FRAME_HEIGHT = 100
 SPRITE_MARGIN = 1
+FRAME_COUNT = 8
+IDLE_FPS = 8.0
+RUN_FPS = 12.0
 MOVE_SPEED = 240.0  # 픽셀/초
 MAX_FRAME_TIME = 0.1
 RESOURCE_DIR = Path(__file__).resolve().parent
 
 LEFT, RIGHT, UP, DOWN = "left", "right", "up", "down"
 ARROW_KEYS = frozenset((LEFT, RIGHT, UP, DOWN))
+# pico2d clip_draw의 bottom 좌표: 원점은 왼쪽 아래다.
+ANIMATION_BOTTOM = {
+    (False, RIGHT): 301,
+    (False, LEFT): 201,
+    (True, RIGHT): 101,
+    (True, LEFT): 1,
+}
 
 
 @dataclass
@@ -33,6 +43,8 @@ class Boy:
     facing: str = RIGHT
     moving: bool = False
     pressed_keys: set[str] = field(default_factory=set)
+    frame: int = 0
+    frame_time: float = 0.0
 
     def press(self, key: str) -> None:
         if key in ARROW_KEYS:
@@ -45,6 +57,7 @@ class Boy:
         if delta_time < 0:
             raise ValueError("경과시간은 음수일 수 없습니다.")
 
+        old_animation = (self.moving, self.facing)
         dx = int(RIGHT in self.pressed_keys) - int(LEFT in self.pressed_keys)
         dy = int(UP in self.pressed_keys) - int(DOWN in self.pressed_keys)
         if dx:
@@ -57,6 +70,29 @@ class Boy:
             self.x += dx * distance
             self.y += dy * distance
         self.moving = (self.x, self.y) != (old_x, old_y)
+
+        if (self.moving, self.facing) != old_animation:
+            self.frame = 0
+            self.frame_time = 0.0
+        else:
+            self.advance_animation(delta_time)
+
+    def advance_animation(self, delta_time: float) -> None:
+        fps = RUN_FPS if self.moving else IDLE_FPS
+        self.frame_time += delta_time
+        # 소수점 오차를 보정하고 여러 프레임이 지난 경우에도 나머지를 보존한다.
+        steps = int((self.frame_time + 1e-12) * fps)
+        if steps:
+            self.frame = (self.frame + steps) % FRAME_COUNT
+            self.frame_time = max(0.0, self.frame_time - steps / fps)
+
+    def sprite_rectangle(self) -> tuple[int, int, int, int]:
+        return (
+            SPRITE_MARGIN + self.frame * FRAME_WIDTH,
+            ANIMATION_BOTTOM[self.moving, self.facing],
+            FRAME_WIDTH,
+            FRAME_HEIGHT,
+        )
 
 
 def handle_events(events, boy: Boy, pico) -> bool:
@@ -85,10 +121,7 @@ def draw_scene(background, sprite, boy: Boy, pico) -> None:
     background.draw(
         CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT
     )
-    bottom = SPRITE_MARGIN + (FRAME_HEIGHT if boy.facing == RIGHT else 0)
-    sprite.clip_draw(
-        SPRITE_MARGIN, bottom, FRAME_WIDTH, FRAME_HEIGHT, boy.x, boy.y
-    )
+    sprite.clip_draw(*boy.sprite_rectangle(), boy.x, boy.y)
     pico.update_canvas()
 
 
